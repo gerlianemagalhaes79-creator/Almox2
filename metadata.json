@@ -1,0 +1,5 @@
+{
+  "name": "Remix: Almoxarifado Inteligente",
+  "description": "Sistema de gestão de estoque com alertas de nível baixo e validade próxima.",
+  "requestFramePermissions": []
+}

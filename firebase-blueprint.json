@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "Item": {
+      "title": "Item",
+      "description": "Um item de estoque no almoxarifado.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nome do item" },
+        "description": { "type": "string", "description": "Descrição opcional" },
+        "quantity": { "type": "number", "description": "Quantidade total em estoque" },
+        "min_quantity": { "type": "number", "description": "Nível mínimo para alerta" },
+        "expiry_date": { "type": "string", "format": "date", "description": "Data de validade (ISO)" },
+        "origin": { "type": "string", "enum": ["contract", "extra"], "description": "Origem do item" },
+        "unit_price": { "type": "number", "description": "Preço unitário" },
+        "supplier": { "type": "string", "description": "Fornecedor" },
+        "category": { "type": "string", "description": "Categoria do item" },
+        "batch_number": { "type": "string", "description": "Número do lote" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "quantity", "min_quantity", "origin"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Registro de entrada ou saída de itens.",
+      "type": "object",
+      "properties": {
+        "item_id": { "type": "string", "description": "ID do item no Firestore" },
+        "item_name": { "type": "string", "description": "Nome do item no momento da transação" },
+        "type": { "type": "string", "enum": ["entry", "exit"], "description": "Tipo de movimentação" },
+        "quantity": { "type": "number", "description": "Quantidade movimentada" },
+        "sector": { "type": "string", "description": "Setor de destino (para saídas)" },
+        "date": { "type": "string", "format": "date-time", "description": "Data da movimentação" },
+        "user_email": { "type": "string", "description": "Email do usuário que realizou a ação" }
+      },
+      "required": ["item_id", "type", "quantity", "date"]
+    }
+  },
+  "firestore": {
+    "/items": {
+      "schema": "Item",
+      "description": "Coleção de itens de estoque"
+    },
+    "/transactions": {
+      "schema": "Transaction",
+      "description": "Coleção de histórico de movimentações"
+    }
+  }
+}

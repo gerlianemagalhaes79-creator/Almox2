@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: items
+    // Fields:
+    //   - name: string (required)
+    //   - description: string (optional)
+    //   - quantity: number (required)
+    //   - min_quantity: number (required)
+    //   - expiry_date: string (optional, ISO format)
+    //   - origin: string (required, 'contract' | 'extra')
+    //   - unit_price: number (optional)
+    //   - supplier: string (optional)
+    //   - category: string (optional)
+    //   - batch_number: string (optional)
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //
+    // Collection: transactions
+    // Fields:
+    //   - item_id: string (required)
+    //   - item_name: string (required)
+    //   - type: string (required, 'entry' | 'exit')
+    //   - quantity: number (required)
+    //   - sector: string (optional)
+    //   - date: timestamp (required)
+    //   - user_email: string (optional)
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "magalhaesme9@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidItem(data) {
+      return data.keys().hasAll(['name', 'quantity', 'min_quantity', 'origin']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.quantity is number &&
+             data.min_quantity is number &&
+             data.origin in ['contract', 'extra'] &&
+             (!('description' in data) || (data.description is string && data.description.size() < 1000)) &&
+             (!('supplier' in data) || (data.supplier is string && data.supplier.size() < 200)) &&
+             (!('category' in data) || (data.category is string && data.category.size() < 100)) &&
+             (!('batch_number' in data) || (data.batch_number is string && data.batch_number.size() < 100));
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['item_id', 'type', 'quantity', 'date']) &&
+             data.item_id is string &&
+             data.type in ['entry', 'exit'] &&
+             data.quantity is number && data.quantity > 0 &&
+             (!('sector' in data) || (data.sector is string && data.sector.size() < 100));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /items/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidItem(request.resource.data);
+      allow update: if isAuthenticated() && isValidItem(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if false; // Transactions are immutable
+      allow delete: if isAdmin();
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
